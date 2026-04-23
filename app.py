@@ -13,15 +13,18 @@ uploaded_files = st.file_uploader(
 )
 
 if uploaded_files:
-    for uploaded in uploaded_files:
-        path = os.path.join("uploads", uploaded.name)
-        with open(path, "wb") as f:
-            f.write(uploaded.read())
-    st.success(f"{len(uploaded_files)} files uploaded successfully!")
+    if len(uploaded_files) > 10:
+        st.error("Maximum 10 PDFs allowed.")
+    else:
+        for uploaded in uploaded_files:
+            path = os.path.join("uploads", uploaded.name)
+            with open(path, "wb") as f:
+                f.write(uploaded.read())
+        st.success(f"{len(uploaded_files)} files uploaded successfully!")
 
 from pdf_parser import extract_text
 
-if uploaded_files:
+if uploaded_files and len(uploaded_files) <= 10:
     all_text = ""
     for uploaded in uploaded_files:
         path = os.path.join("uploads", uploaded.name)
