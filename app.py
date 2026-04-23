@@ -7,7 +7,7 @@ st.write("Upload papers and ask questions")
 os.makedirs("uploads", exist_ok=True)
 
 uploaded_files = st.file_uploader(
-    "Upload 10–15 Research Papers",
+    "Upload max 10 Research Papers",
     type=["pdf"],
     accept_multiple_files=True
 )
