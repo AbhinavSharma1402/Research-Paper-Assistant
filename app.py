@@ -23,6 +23,7 @@ if uploaded_files:
         st.success(f"{len(uploaded_files)} files uploaded successfully!")
 
 from pdf_parser import extract_text
+import fitz  # PyMuPDF
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -31,15 +32,26 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=200
 )
 
+documents = []
+
 if uploaded_files and len(uploaded_files) <= 10:
-    all_text = ""
     for uploaded in uploaded_files:
-        path = os.path.join("uploads", uploaded.name)
-        text = extract_text(path)
-        all_text += text + "\n\n"
-    
-    # Split text into chunks
-    chunks = splitter.split_text(all_text)
-    st.success(f"Text split into {len(chunks)} chunks")
-    
-    st.text_area("Extracted Text", all_text[:3000])
+        # Open PDF with PyMuPDF
+        doc = fitz.open(stream=uploaded.read(), filetype="pdf")
+
+        text = ""
+        for page in doc:
+            text += page.get_text()
+
+        doc.close()
+
+        chunks = splitter.split_text(text)
+
+        for chunk in chunks:
+            documents.append({
+                "text": chunk,
+                "source": uploaded.name
+            })
+
+    st.success(f"Text split into {len(documents)} chunks")
+    st.text_area("Documents", str(documents[:3])[:3000])
