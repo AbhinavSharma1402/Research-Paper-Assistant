@@ -24,10 +24,22 @@ if uploaded_files:
 
 from pdf_parser import extract_text
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+
 if uploaded_files and len(uploaded_files) <= 10:
     all_text = ""
     for uploaded in uploaded_files:
         path = os.path.join("uploads", uploaded.name)
         text = extract_text(path)
         all_text += text + "\n\n"
+    
+    # Split text into chunks
+    chunks = splitter.split_text(all_text)
+    st.success(f"Text split into {len(chunks)} chunks")
+    
     st.text_area("Extracted Text", all_text[:3000])
