@@ -30,7 +30,7 @@ if uploaded_files:
     else:
         for uploaded in uploaded_files:
 
-            pdf_bytes = uploaded.read()   # READ ONLY ONCE
+            pdf_bytes = uploaded.getvalue()   # can call multiple times, as it returns bytes
 
             # Save PDF
             path = os.path.join("uploads", uploaded.name)
