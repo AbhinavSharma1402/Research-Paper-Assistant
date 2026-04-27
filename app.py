@@ -58,3 +58,24 @@ if uploaded_files:
         st.success(f"Text split into {len(documents)} chunks")
 
         st.text_area("Preview", str(documents[:3]), height=300)
+        # chunks to embeddings and store in vector database (e.g., FAISS, Pinecone, etc.)
+from langchain.schema import Document
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# Convert dict chunks -> LangChain Documents
+docs = []
+
+for item in documents:
+    docs.append(
+        Document(
+            page_content=item["text"],
+            metadata={"source": item["source"]}
+        )
+    )
+
+# Load embedding model
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
