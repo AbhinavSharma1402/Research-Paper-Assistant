@@ -71,10 +71,10 @@ streamlit run app.py
 4. Text is extracted from each PDF
 5. Text is split into chunks
 6. Preview of processed chunks shown in the UI
+7. Vhinks converted into  embeddings
 
 ## 📌 Upcoming Steps
 
-* Step 3: Generate embeddings
 * Step 4: Store vectors in FAISS
 * Step 5: Ask questions across papers (RAG)
 * Step 6: Deploy online
