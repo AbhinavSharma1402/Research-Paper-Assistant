@@ -8,13 +8,18 @@ from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
 st.title("Research Paper Assistant")
-st.write("Upload papers and ask questions")
 
 os.makedirs("uploads", exist_ok=True)
 
+@st.cache_resource
+def load_embeddings():
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
 uploaded_files = st.file_uploader(
-    "Upload max 10 Research Papers",
-    type=["pdf"],
+    "Upload max 10 PDFs",
+    type="pdf",
     accept_multiple_files=True
 )
 
@@ -28,59 +33,50 @@ documents = []
 if uploaded_files:
 
     if len(uploaded_files) > 10:
-        st.error("Maximum 10 PDFs allowed.")
+        st.error("Maximum 10 PDFs allowed")
 
     else:
         for uploaded in uploaded_files:
 
-            pdf_bytes = uploaded.getvalue()   # can call multiple times, as it returns bytes
+            pdf_bytes = uploaded.getvalue()
 
-            # Save PDF
             path = os.path.join("uploads", uploaded.name)
+
             with open(path, "wb") as f:
                 f.write(pdf_bytes)
 
-            # Open with PyMuPDF
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
 
             text = ""
+
             for page in doc:
                 text += page.get_text()
 
             doc.close()
 
-            chunks = splitter.split_text(text)
+            if text.strip():
 
-            for chunk in chunks:
-                documents.append({
-                    "text": chunk,
-                    "source": uploaded.name
-                })
+                chunks = splitter.split_text(text)
 
-        st.success(f"{len(uploaded_files)} files uploaded successfully!")
-        st.success(f"Text split into {len(documents)} chunks")
+                for chunk in chunks:
+                    documents.append(
+                        Document(
+                            page_content=chunk,
+                            metadata={"source": uploaded.name}
+                        )
+                    )
 
-        st.text_area("Preview", str(documents[:3]), height=300)
+if documents:
 
-# Only process if documents exist
-if documents and len(documents) > 0:
-    # Convert dict chunks -> LangChain Documents
-    docs = []
+    if "vectorstore" not in st.session_state:
 
-    for item in documents:
-        docs.append(
-            Document(
-                page_content=item["text"],
-                metadata={"source": item["source"]}
-            )
+        embeddings = load_embeddings()
+
+        st.session_state.vectorstore = FAISS.from_documents(
+            documents,
+            embeddings
         )
 
-    # Load embedding model
-    embedding_model = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+        st.session_state.vectorstore.save_local("vectorstore")
 
-    # Create vector store
-    vectorstore = FAISS.from_documents(docs, embedding_model)
-    st.success("Vector store created!")
-
+        st.success("Vector Store Ready!")
