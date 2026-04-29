@@ -72,10 +72,10 @@ streamlit run app.py
 5. Text is split into chunks
 6. Preview of processed chunks shown in the UI
 7. Vhinks converted into  embeddings
+8. Store vectors in FAISS
 
 ## 📌 Upcoming Steps
 
-* Step 4: Store vectors in FAISS
 * Step 5: Ask questions across papers (RAG)
 * Step 6: Deploy online
 
