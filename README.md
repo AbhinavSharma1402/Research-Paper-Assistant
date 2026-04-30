@@ -51,12 +51,6 @@ Research-Paper-Assistant/
 └── requirements.txt
 ```
 
-## 🛠️ Installation
-
-```bash
-pip install streamlit pymupdf langchain-text-splitters
-```
-
 ## ▶️ Run the App
 
 ```bash
