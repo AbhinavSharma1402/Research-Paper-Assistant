@@ -120,19 +120,19 @@ if uploaded_files and st.button("Process Papers"):
 
 # ---------------- LAZY LOAD EXISTING DB ----------------
 # Only load if not already loaded and file exists
-# if (
-#     st.session_state.vectorstore is None
-#     and os.path.exists("vectorstore/index.faiss")
-# ):
-#     with st.spinner("Loading existing database..."):
-#         try:
-#             embeddings = load_embeddings()
-#             st.session_state.vectorstore = FAISS.load_local(
-#                 "vectorstore",
-#                 embeddings,
-#                 allow_dangerous_deserialization=True
-#             )
-#             st.session_state.processed = True
-#             st.session_state.embeddings_loaded = True
-#         except Exception as e:
-#             st.error(f"Failed to load existing database: {e}")
+if (
+    st.session_state.vectorstore is None
+    and os.path.exists("vectorstore/index.faiss")
+):
+    with st.spinner("Loading existing database..."):
+        try:
+            embeddings = load_embeddings()
+            st.session_state.vectorstore = FAISS.load_local(
+                "vectorstore",
+                embeddings,
+                allow_dangerous_deserialization=True
+            )
+            st.session_state.processed = True
+            st.session_state.embeddings_loaded = True
+        except Exception as e:
+            st.error(f"Failed to load existing database: {e}")
