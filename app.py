@@ -47,7 +47,7 @@ def get_splitter():
 def load_gemini():
     import google.generativeai as genai
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    return genai.GenerativeModel("gemini-1.5-flash")
+    return genai.GenerativeModel("models/gemini-2.5-flash")
 
 
 # ---------------- CREATE DOCUMENTS ----------------
