@@ -20,9 +20,7 @@ if "processed" not in st.session_state:
     st.session_state.processed = False
 
 
-# ---------------- FAST STARTUP ----------------
-# Heavy imports moved inside functions
-
+# ---------------- LOAD EMBEDDINGS ----------------
 @st.cache_resource
 def load_embeddings():
     from langchain_huggingface import HuggingFaceEmbeddings
@@ -31,6 +29,7 @@ def load_embeddings():
     )
 
 
+# ---------------- LOAD TEXT SPLITTER ----------------
 @st.cache_resource
 def get_splitter():
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -40,6 +39,15 @@ def get_splitter():
     )
 
 
+# ---------------- LOAD GEMINI MODEL ----------------
+@st.cache_resource
+def load_gemini():
+    import google.generativeai as genai
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    return genai.GenerativeModel("gemini-1.5-flash")
+
+
+# ---------------- CREATE DOCUMENTS ----------------
 def create_documents(files):
     from langchain_core.documents import Document
 
@@ -73,24 +81,47 @@ def create_documents(files):
     return docs
 
 
+# ---------------- CREATE VECTORSTORE ----------------
 def create_vectorstore(documents):
     from langchain_community.vectorstores import FAISS
-
     embeddings = load_embeddings()
-
     return FAISS.from_documents(documents, embeddings)
 
 
+# ---------------- LOAD EXISTING VECTORSTORE ----------------
 def load_existing_db():
     from langchain_community.vectorstores import FAISS
-
     embeddings = load_embeddings()
-
     return FAISS.load_local(
         "vectorstore",
         embeddings,
         allow_dangerous_deserialization=True
     )
+
+
+# ---------------- GENERATE ANSWER USING GEMINI ----------------
+def generate_answer(question, docs):
+    model = load_gemini()
+
+    context = "\n\n".join([doc.page_content for doc in docs])
+
+    prompt = f"""
+    You are a research assistant.
+
+    Use the context below to answer the question clearly and concisely.
+
+    Context:
+    {context}
+
+    Question:
+    {question}
+
+    Answer:
+    """
+
+    response = model.generate_content(prompt)
+
+    return response.text
 
 
 # ---------------- FILE UPLOAD ----------------
@@ -103,6 +134,7 @@ uploaded_files = st.file_uploader(
 if uploaded_files:
     st.success(f"{len(uploaded_files)} files selected.")
 
+
 # ---------------- PROCESS BUTTON ----------------
 if uploaded_files and st.button("Process Papers"):
 
@@ -112,16 +144,15 @@ if uploaded_files and st.button("Process Papers"):
 
         if docs:
             db = create_vectorstore(docs)
-
             db.save_local("vectorstore")
 
             st.session_state.vectorstore = db
             st.session_state.processed = True
 
             st.success(f"Done! {len(docs)} chunks indexed.")
-
         else:
             st.error("No readable text found.")
+
 
 # ---------------- LOAD EXISTING DATABASE ----------------
 if st.button("Load Existing Database"):
@@ -139,6 +170,7 @@ if st.button("Load Existing Database"):
         except Exception as e:
             st.error(e)
 
+
 # ---------------- ASK QUESTIONS ----------------
 if st.session_state.processed:
 
@@ -146,14 +178,22 @@ if st.session_state.processed:
 
     if question and st.button("Search"):
 
-        with st.spinner("Searching..."):
+        with st.spinner("Thinking..."):
 
             docs = st.session_state.vectorstore.similarity_search(
                 question,
                 k=3
             )
 
-            for i, doc in enumerate(docs, 1):
-                st.markdown(f"### Result {i}")
-                st.write(doc.page_content[:1500])
-                st.caption(doc.metadata["source"])
+            # 🔥 Generate AI Answer
+            answer = generate_answer(question, docs)
+
+            st.markdown("## 🧠 Answer")
+            st.write(answer)
+
+            # 🔍 Show sources
+            with st.expander("🔍 Source Context"):
+                for i, doc in enumerate(docs, 1):
+                    st.markdown(f"### Source {i}")
+                    st.write(doc.page_content[:1500])
+                    st.caption(doc.metadata["source"])
