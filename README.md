@@ -106,6 +106,7 @@ The app will start at `http://localhost:8501`
 6. Embeddings are generated for each chunk
 7. Vectorstore is created and saved to `vectorstore/` folder
 8. Success message shows number of indexed chunks
+9. Integrate LLM for answer generation (currently only retrieval)
 
 **Option 2: Use Existing Vectorstore**
 1. Click "Load Existing Database"
@@ -119,7 +120,7 @@ The app will start at `http://localhost:8501`
 
 ## 📌 Upcoming Features
 
-* Step 5: Integrate LLM for answer generation (currently only retrieval)
+
 * Step 6: Add source highlighting and citation tracking
 * Step 7: Deploy online
 * Performance optimizations for large document collections
