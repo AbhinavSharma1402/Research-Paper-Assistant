@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 import fitz
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Research Paper Assistant", layout="wide")
