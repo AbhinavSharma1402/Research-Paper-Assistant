@@ -22,6 +22,9 @@ if "vectorstore" not in st.session_state:
 if "processed" not in st.session_state:
     st.session_state.processed = False
 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
 
 # ---------------- LOAD EMBEDDINGS ----------------
 @st.cache_resource
@@ -177,9 +180,12 @@ if st.button("Load Existing Database"):
 # ---------------- ASK QUESTIONS ----------------
 if st.session_state.processed:
 
-    question = st.text_input("Ask a question from papers")
+    if "last_docs" not in st.session_state:
+        st.session_state.last_docs = []
 
-    if question and st.button("Search"):
+    question = st.chat_input("Ask your research question...")
+
+    if question:
 
         with st.spinner("Thinking..."):
 
