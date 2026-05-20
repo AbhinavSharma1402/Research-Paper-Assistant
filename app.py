@@ -210,7 +210,10 @@ if st.session_state.processed:
         "Ask a question from papers..."
     )
 
-   
+    if st.button("Clear chat history"):
+        st.session_state.chat_history = []
+        st.experimental_rerun()
+
     # ---------------- DISPLAY OLD CHAT HISTORY ----------------
     for chat in st.session_state.chat_history:
 
