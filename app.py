@@ -212,7 +212,7 @@ if st.session_state.processed:
 
     if st.button("Clear chat history"):
         st.session_state.chat_history = []
-        st.experimental_rerun()
+        st.rerun()
 
     # ---------------- DISPLAY OLD CHAT HISTORY ----------------
     for chat in st.session_state.chat_history:
