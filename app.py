@@ -22,8 +22,8 @@ if "vectorstore" not in st.session_state:
 if "processed" not in st.session_state:
     st.session_state.processed = False
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 
 # ---------------- LOAD EMBEDDINGS ----------------
@@ -106,21 +106,47 @@ def load_existing_db():
 
 
 # ---------------- GENERATE ANSWER USING GEMINI ----------------
-def generate_answer(question, docs):
+def generate_answer(question, docs, history):
     model = load_gemini()
 
     context = "\n\n".join([doc.page_content for doc in docs])
 
+    conversation = ""
+    for item in history[-3:]:
+        conversation += f"""
+        User: {item['question']}
+        Assistant: {item['answer']}
+        """
+
     prompt = f"""
-    You are a research assistant.
+    You are an intelligent research assistant.
 
-    Use the context below to answer the question clearly and concisely.
+    Use BOTH:
+    1. Previous conversation history
+    2. Retrieved research paper context
 
-    Context:
+    to answer naturally and accurately.
+
+    ---------------- Conversation History ----------------
+
+    {conversation}
+
+    ---------------- Research Context ----------------
+
     {context}
 
-    Question:
+    ---------------- Current Question ----------------
+
     {question}
+
+    ---------------- Instructions ----------------
+
+    - Answer clearly and concisely
+    - Use research context primarily
+    - If answer is not in context, say:
+      "I could not find this in the uploaded papers."
+    - Maintain conversational continuity
+    - Explain technical concepts simply
 
     Answer:
     """
@@ -180,29 +206,55 @@ if st.button("Load Existing Database"):
 # ---------------- ASK QUESTIONS ----------------
 if st.session_state.processed:
 
-    if "last_docs" not in st.session_state:
-        st.session_state.last_docs = []
+    question = st.chat_input(
+        "Ask a question from papers..."
+    )
 
-    question = st.chat_input("Ask your research question...")
+   
+    # ---------------- DISPLAY OLD CHAT HISTORY ----------------
+    for chat in st.session_state.chat_history:
 
+        with st.chat_message("user"):
+            st.write(chat["question"])
+
+        with st.chat_message("assistant"):
+            st.write(chat["answer"])
+
+    # ---------------- NEW QUESTION ----------------
     if question:
+
+        with st.chat_message("user"):
+            st.write(question)
 
         with st.spinner("Thinking..."):
 
             docs = st.session_state.vectorstore.similarity_search(
                 question,
-                k=3
+                k=5
             )
 
-            # 🔥 Generate AI Answer
-            answer = generate_answer(question, docs)
+            answer = generate_answer(
+                question,
+                docs,
+                st.session_state.chat_history
+            )
 
-            st.markdown("## 🧠 Answer")
-            st.write(answer)
+            with st.chat_message("assistant"):
+                st.write(answer)
 
-            # 🔍 Show sources
+            st.session_state.chat_history.append({
+                "question": question,
+                "answer": answer
+            })
+
             with st.expander("🔍 Source Context"):
+
                 for i, doc in enumerate(docs, 1):
+
                     st.markdown(f"### Source {i}")
-                    st.write(doc.page_content[:1500])
-                    st.caption(doc.metadata["source"])
+
+                    st.write(doc.page_content[:1200])
+
+                    st.caption(
+                        f"📄 {doc.metadata['source']}"
+                    )
