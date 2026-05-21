@@ -1,16 +1,33 @@
 import os
 import fitz
 
+from dotenv import load_dotenv
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from langchain_community.vectorstores import FAISS
-
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAI
 
 from langchain_classic.chains.conversational_retrieval.base import ConversationalRetrievalChain
+
+
+# -----------------------------
+# LOAD ENV VARIABLES
+# -----------------------------
+
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+if not GOOGLE_API_KEY:
+    raise ValueError(
+        "GOOGLE_API_KEY not found. "
+        "Create a .env file and add your Gemini API key."
+    )
+
 
 # -----------------------------
 # LOAD PDF TEXT
@@ -19,6 +36,8 @@ from langchain_classic.chains.conversational_retrieval.base import Conversationa
 def extract_text_from_pdfs(pdf_files):
 
     documents = []
+
+    os.makedirs("uploads", exist_ok=True)
 
     for pdf in pdf_files:
 
@@ -107,7 +126,8 @@ def create_chain(vectorstore):
 
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
-        temperature=0.3
+        temperature=0.3,
+        google_api_key=GOOGLE_API_KEY
     )
 
     retriever = vectorstore.as_retriever(
@@ -116,7 +136,8 @@ def create_chain(vectorstore):
 
     chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=retriever
+        retriever=retriever,
+        return_source_documents=True
     )
 
     return chain
