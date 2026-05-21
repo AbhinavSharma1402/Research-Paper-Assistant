@@ -125,7 +125,7 @@ def load_vectorstore():
 def create_chain(vectorstore):
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         temperature=0.3,
         google_api_key=GOOGLE_API_KEY
     )
