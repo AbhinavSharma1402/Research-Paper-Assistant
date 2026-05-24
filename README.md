@@ -106,8 +106,9 @@ The app will start at `http://localhost:8501`
 6. Embeddings are generated for each chunk
 7. Vectorstore is created and saved to `vectorstore/` folder
 8. Success message shows number of indexed chunks
-9. Integrate LLM (gemini) for answer generation 
-10. Chat history  added
+9. Integrated LLM (gemini) for answer generation 
+10.Ask the questions
+11. Chat history  added
 
 **Option 2: Use Existing Vectorstore**
 1. Click "Load Existing Database"
