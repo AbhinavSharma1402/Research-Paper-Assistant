@@ -1,156 +1,132 @@
 # Research Paper Assistant
 
-A Streamlit-based application that allows users to upload multiple research papers (PDFs), extract text, create embeddings, and ask questions across the papers using Retrieval-Augmented Generation (RAG).
+Production-ready Research Paper Assistant with FastAPI backend, Streamlit frontend, JWT authentication, persistent chat memory, and retrieval-augmented generation (RAG).
 
-## 🚀 Current Progress
+## 🚀 What This Project Provides
 
-### ✅ Step 1: Multi-PDF Upload Interface
+* User registration, login, and JWT authentication
+* Multi-document PDF upload (20+ PDFs supported)
+* PDF parsing, intelligent chunking, embedding generation, and vector storage
+* Cross-document question answering with context retrieval
+* Persistent chat history and conversational memory per user
+* FastAPI endpoints for auth, uploads, queries, chat history, and user management
+* Streamlit frontend that communicates exclusively with the FastAPI backend
+* Docker and docker-compose deployment for local development and production
 
-Users can upload up to 10 PDF research papers through a clean Streamlit UI.
+## 📁 Architecture Overview
 
-**Features:**
-
-* Multiple file upload support
-* PDF-only validation
-* Maximum 10 files allowed
-* Success/error messages in the UI
-
-### ✅ Step 2: PDF Text Extraction + Chunking
-
-Uploaded PDFs are processed and converted into text using PyMuPDF.
-The extracted text is then split into smaller chunks for embedding generation.
-
-**Libraries Used:**
-
-* `PyMuPDF (fitz)` for PDF parsing
-* `RecursiveCharacterTextSplitter` from LangChain for chunking
-
-**Chunk Settings:**
-
-* `chunk_size = 700`
-* `chunk_overlap = 80`
-
-**Stored Output Format:**
-Each chunk is stored as a LangChain Document with source metadata:
-
-```python
-{
-  "page_content": "chunk content...",
-  "metadata": {"source": "paper_name.pdf"}
-}
 ```
-
-### ✅ Step 3: Vector Embeddings & FAISS Storage
-
-Processed chunks are converted into embeddings using HuggingFace's sentence-transformers model and stored in a FAISS vectorstore for fast similarity search.
-
-**Embedding Model:**
-* `sentence-transformers/all-MiniLM-L6-v2`
-
-**Storage:**
-* Vectorstore saved locally in `vectorstore/` folder
-* Persists across sessions
-
-### ✅ Step 4: Semantic Search & Question Answering
-
-Users can load the vectorstore and ask questions about the papers. The app retrieves the top 3 most relevant chunks and displays them.
-
-**Features:**
-* Load existing vectorstore or process new papers
-* Ask questions via text input
-* Display top 3 relevant results with source attribution
-* Full chunk content preview (first 1500 characters)
-
-## 📁 Project Structure
-
-```text
 Research-Paper-Assistant/
-├── app.py                    # Main Streamlit application
-├── pdf_parser.py             # PDF parsing utilities
-├── rag.py                    # RAG pipeline utilities
-├── utils.py                  # Helper utilities
-├── uploads/                  # Temporary storage for uploaded PDFs
-├── vectorstore/              # FAISS vectorstore persistence
-│   └── index.faiss
-├── README.md
-└── requirements.txt
+├── backend/
+│   ├── auth/                 # JWT auth helpers and schemas
+│   ├── core/                 # configuration and logging
+│   ├── db/                   # SQLAlchemy models, schemas, and CRUD
+│   ├── routes/               # FastAPI endpoints
+│   ├── services/             # PDF, vector store, RAG, and caching logic
+│   └── main.py               # FastAPI application bootstrap
+├── frontend/
+│   ├── api_client.py         # HTTP client for Streamlit
+│   ├── components.py         # Streamlit UI components
+│   └── app.py                # Streamlit frontend
+├── docker-compose.yml
+├── Dockerfile
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
 
-## ▶️ Run the App
+## 🧠 High-Level Data Flow
 
-```bash
-streamlit run app.py
-```
+1. User logs in and receives a JWT token
+2. User uploads PDF files through the Streamlit UI
+3. Backend saves PDFs, extracts text, and splits text into chunks
+4. Embeddings are generated and stored in FAISS vector database
+5. User asks a question via frontend
+6. Backend performs similarity search and retrieves relevant context
+7. LLM generates a response using retrieved document memory
+8. Answer and sources are returned to the frontend and persisted in chat history
 
-The app will start at `http://localhost:8501`
+## 🔐 Authentication Flow
 
-## 🎯 UI Components
+* `POST /api/auth/register` — create a new user
+* `POST /api/auth/login` — authenticate and receive JWT
+* `GET /api/users/me` — fetch authenticated user info
 
-| Component | Description |
-|-----------|-------------|
-| **File Uploader** | Upload up to 10 PDF research papers |
-| **Process Papers** | Button to extract text, chunk, embed, and index papers |
-| **Load Existing Database** | Button to load a previously processed vectorstore |
-| **Question Input** | Text field to ask questions about the papers |
-| **Search Button** | Triggers semantic search across indexed papers |
-| **Results Display** | Shows top 3 most relevant chunks with source attribution |
+JWT tokens are signed using `JWT_SECRET_KEY` and validated on protected endpoints.
 
-## 🧪 Current Workflow
+## 📦 API Endpoints
 
-**Option 1: Process New Papers**
-1. Launch the app with `streamlit run app.py`
-2. Upload up to 10 PDFs
-3. Click "Process Papers"
-4. PDFs are parsed and text is extracted
-5. Text is split into chunks (700 tokens, 80 overlap)
-6. Embeddings are generated for each chunk
-7. Vectorstore is created and saved to `vectorstore/` folder
-8. Success message shows number of indexed chunks
-9. Integrated LLM (gemini) for answer generation 
-10. Ask the questions
-11. Chat history  added
+* `POST /api/auth/register` — register user
+* `POST /api/auth/login` — login user
+* `GET /api/users/me` — authenticated user profile
+* `POST /api/documents/upload` — upload and index PDFs
+* `GET /api/documents/` — list uploaded documents
+* `POST /api/chats/` — create a chat session
+* `GET /api/chats/` — list chat sessions
+* `GET /api/chats/{chat_id}` — get chat metadata
+* `GET /api/chats/{chat_id}/messages` — retrieve chat history
+* `POST /api/chats/{chat_id}/query` — ask a question in a conversation
 
-**Option 2: Use Existing Vectorstore**
-1. Click "Load Existing Database"
-2. Previously processed vectorstore is loaded from `vectorstore/` folder
+## 🗂️ Database Schema
 
-**Option 3: Ask Questions**
-1. After processing or loading, enter a question in the text input
-2. Click "Search"
-3. The app retrieves top 3 most relevant chunks
-4. Results are displayed with source attribution
+* `users` — email, hashed password, timestamps
+* `documents` — file metadata, storage path, page count, chunk count
+* `chat_sessions` — per-user conversations
+* `chat_messages` — user and assistant message logs
+* `query_cache` — repeated question caching and sources
 
-## 📌 Upcoming Features
+## 🧠 Conversational Memory
 
+Every question and answer is saved to `chat_messages`, and follow-up queries are sent to the RAG chain with the full chat history for that session. This keeps context across turns and supports follow-up questions.
 
-* Step 6: Add source highlighting and citation tracking
-* Step 7: Deploy online
-* Performance optimizations for large document collections
+## ⚙️ RAG Pipeline
 
-## 📄 Tech Stack
+1. Extract text from PDFs using PyMuPDF
+2. Chunk long documents with LangChain's `RecursiveCharacterTextSplitter`
+3. Create embeddings with `sentence-transformers/all-MiniLM-L6-v2`
+4. Store vectors in FAISS per user
+5. Use `ConversationalRetrievalChain` to answer questions with retrieved context
 
-* **Python 3.x**
-* **Streamlit** - Web UI framework
-* **PyMuPDF (fitz)** - PDF text extraction
-* **LangChain** - Text splitting, embeddings, vector store
-* **HuggingFace Transformers** - Sentence embeddings (all-MiniLM-L6-v2)
-* **FAISS** - Vector similarity search and storage
+## 🚀 Deployment
 
-## 🔧 Installation
+### Local Quickstart
 
-1. Clone the repository
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-3. Activate the virtual environment:
-   - **Windows:** `venv\Scripts\activate`
-   - **macOS/Linux:** `source venv/bin/activate`
-4. Install dependencies:
+1. Copy `.env.example` to `.env`
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
+3. Start the backend:
+   ```bash
+   uvicorn backend.main:app --reload
+   ```
+4. Start the Streamlit frontend:
+   ```bash
+   streamlit run frontend/app.py
+   ```
 
-## 👨‍💻 Author
+### Docker Compose
 
-Built as a hands-on AI/LLM project for learning Retrieval-Augmented Generation (RAG) systems.
+Run the full system with one command:
+
+```bash
+docker-compose up --build
+```
+
+The backend will be available at `http://localhost:8000` and the frontend at `http://localhost:8501`.
+
+## 📌 Notes for Interviews
+
+* Backend is separated into modules for authentication, database, services, and routing.
+* JWT authentication isolates user sessions and secures all protected APIs.
+* Persistent storage is implemented with SQLAlchemy and a relational database schema.
+* Chat memory is stored in the database, enabling follow-up questions in the same conversation.
+* The vector database uses FAISS for high-performance semantic search.
+* Docker Compose provides a reproducible containerized environment with Postgres, backend, and frontend.
+
+## 🧪 Requirements
+
+* Python 3.11+
+* OpenAI API key stored in `.env`
+* Docker and Docker Compose for containerized deployment
+

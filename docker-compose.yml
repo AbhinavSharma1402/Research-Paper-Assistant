@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: research_assistant
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  backend:
+    build: .
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/research_assistant
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - VECTOR_STORE_ROOT=/app/vectorstore
+      - UPLOAD_DIR=/app/uploads
+    ports:
+      - 8000:8000
+    volumes:
+      - ./:/app
+      - ./uploads:/app/uploads
+      - ./vectorstore:/app/vectorstore
+    depends_on:
+      - db
+    networks:
+      - appnet
+
+  frontend:
+    build: .
+    command: streamlit run frontend/app.py --server.port 8501 --server.headless true
+    env_file: .env
+    environment:
+      - API_BASE_URL=http://backend:8000/api
+    ports:
+      - 8501:8501
+    volumes:
+      - ./:/app
+    depends_on:
+      - backend
+    networks:
+      - appnet
+
+volumes:
+  postgres_data:
+
+networks:
+  appnet:
+    driver: bridge

@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "content": "what is head token and why it is used?"
+    },
+    {
+        "role": "assistant",
+        "content": "A head token is a component designed to **represent the channel information of the input**. Each head token specifically represents information on the channel dimension.\n\nIt is used for two main reasons:\n\n1.  **Original Purpose (from [19]):** To enhance the interaction between the representation of attention heads in the Multi-Head Self-Attention (MHSA) mechanism, which has been shown to improve the performance of Vision Transformers on small-scale image classification datasets.\n2.  **Purpose in the described Temporal-Channel Modeling (TCM) module:** To facilitate the correlation between temporal and channel dependencies by interacting with temporal tokens during the MHSA process. This helps in learning temporal-channel interaction, particularly for tasks like spoofing detection."
+    }
+]
